@@ -7,8 +7,11 @@ RUN npm ci --include=optional --no-audit --no-fund \
     || (rm -rf node_modules package-lock.json && npm install --include=optional --no-audit --no-fund)
 RUN OXIDE_VERSION=$(node -p "require('./node_modules/@tailwindcss/oxide/package.json').version") \
     && ARCH=$(uname -m) \
-    && if [ "$ARCH" = "x86_64" ]; then npm install --no-save --no-audit --no-fund "@tailwindcss/oxide-linux-x64-gnu@${OXIDE_VERSION}" "@tailwindcss/oxide-linux-x64-musl@${OXIDE_VERSION}"; fi \
-    && if [ "$ARCH" = "aarch64" ]; then npm install --no-save --no-audit --no-fund "@tailwindcss/oxide-linux-arm64-gnu@${OXIDE_VERSION}" "@tailwindcss/oxide-linux-arm64-musl@${OXIDE_VERSION}"; fi
+    && LIBC=$( (ldd --version 2>&1 || true) | grep -qi musl && echo musl || echo gnu ) \
+    && if [ "$ARCH" = "x86_64" ] && [ "$LIBC" = "gnu" ]; then npm install --no-save --no-audit --no-fund "@tailwindcss/oxide-linux-x64-gnu@${OXIDE_VERSION}"; fi \
+    && if [ "$ARCH" = "x86_64" ] && [ "$LIBC" = "musl" ]; then npm install --no-save --no-audit --no-fund "@tailwindcss/oxide-linux-x64-musl@${OXIDE_VERSION}"; fi \
+    && if [ "$ARCH" = "aarch64" ] && [ "$LIBC" = "gnu" ]; then npm install --no-save --no-audit --no-fund "@tailwindcss/oxide-linux-arm64-gnu@${OXIDE_VERSION}"; fi \
+    && if [ "$ARCH" = "aarch64" ] && [ "$LIBC" = "musl" ]; then npm install --no-save --no-audit --no-fund "@tailwindcss/oxide-linux-arm64-musl@${OXIDE_VERSION}"; fi
 RUN npm rebuild @tailwindcss/oxide --no-audit --no-fund || true
 COPY vite.config.js ./
 COPY resources ./resources
