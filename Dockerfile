@@ -1,6 +1,7 @@
 FROM node:20 AS node_build
 WORKDIR /app
 ENV npm_config_include=optional
+ENV NAPI_RS_FORCE_WASI=1
 COPY package.json package-lock.json* ./
 RUN npm ci --include=optional --no-audit --no-fund \
     || (rm -rf node_modules package-lock.json && npm install --include=optional --no-audit --no-fund)
