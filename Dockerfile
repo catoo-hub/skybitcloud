@@ -5,6 +5,11 @@ ENV NAPI_RS_FORCE_WASI=1
 COPY package.json package-lock.json* ./
 RUN npm ci --include=optional --no-audit --no-fund \
     || (rm -rf node_modules package-lock.json && npm install --include=optional --no-audit --no-fund)
+RUN OXIDE_VERSION=$(node -p "require('./node_modules/@tailwindcss/oxide/package.json').version") \
+    && npm install --no-save --no-audit --no-fund "@tailwindcss/oxide-wasm32-wasi@${OXIDE_VERSION}" \
+    && ARCH=$(uname -m) \
+    && if [ "$ARCH" = "x86_64" ]; then npm install --no-save --no-audit --no-fund "@tailwindcss/oxide-linux-x64-gnu@${OXIDE_VERSION}"; fi \
+    && if [ "$ARCH" = "aarch64" ]; then npm install --no-save --no-audit --no-fund "@tailwindcss/oxide-linux-arm64-gnu@${OXIDE_VERSION}"; fi
 RUN npm rebuild @tailwindcss/oxide --no-audit --no-fund || true
 COPY vite.config.js ./
 COPY resources ./resources
